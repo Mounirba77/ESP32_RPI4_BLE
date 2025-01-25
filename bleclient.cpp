@@ -94,6 +94,7 @@ void BLEClient::errorReceived(QLowEnergyController::Error error)
     emit connectionStatusChanged();
 }
 
+//For floats
 // void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 // {
 //     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
@@ -105,6 +106,7 @@ void BLEClient::errorReceived(QLowEnergyController::Error error)
 //     }
 // }
 
+//for sting
 void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 {
     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
