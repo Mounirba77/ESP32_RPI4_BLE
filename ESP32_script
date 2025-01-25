@@ -78,8 +78,9 @@ void loop() {
     // notify changed value
     if (deviceConnected) {
       String message = "hello from esp32";
-      float tmp = 3.14;
-        pCharacteristic->setValue(message);
+      float pi = 3.14;
+      double e = 2.71;
+        pCharacteristic->setValue(e);
         pCharacteristic->notify();
 //        value++;
         delay(1000);
