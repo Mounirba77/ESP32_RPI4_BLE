@@ -18,6 +18,7 @@ class BLEClient : public QObject
     Q_PROPERTY(QString receivedMessage READ receivedMessage NOTIFY messageReceived)
     Q_PROPERTY(double receivedDouble READ receivedDouble NOTIFY doubleReceived)
     Q_PROPERTY(int receivedInt READ receivedInt NOTIFY intReceived)
+    Q_PROPERTY(quint16 receivedUInt16 READ receivedUInt16 NOTIFY uint16Received)
 
 public:
     explicit BLEClient(QObject *parent = nullptr);
@@ -29,6 +30,7 @@ public:
     QString receivedMessage() const;
     double receivedDouble() const;
     int receivedInt() const;
+    quint16 receivedUInt16() const;
 
 signals:
     void deviceNameChanged();
@@ -37,6 +39,7 @@ signals:
     void messageReceived(const QString &message);
     void doubleReceived(double value);
     void intReceived(int value);
+    void uint16Received(quint16 value);
 
 private slots:
     void deviceConnected();
@@ -55,6 +58,7 @@ private:
     QString m_receivedMessage;
     double m_receivedDouble;
     int m_receivedInt;
+    quint16 m_receivedUInt16;
 
 };
 
