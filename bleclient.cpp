@@ -94,14 +94,28 @@ void BLEClient::errorReceived(QLowEnergyController::Error error)
     emit connectionStatusChanged();
 }
 
+// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
+// {
+//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
+
+//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
+//         memcpy(&m_receivedValue, newValue.constData(), sizeof(float));
+//         qDebug() << "Received value:" << m_receivedValue;
+//         emit valueReceived(m_receivedValue);
+//     }
+// }
+
 void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 {
     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
 
     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-        memcpy(&m_receivedValue, newValue.constData(), sizeof(float));
-        qDebug() << "Received value:" << m_receivedValue;
-        emit valueReceived(m_receivedValue);
+        // Convert the received data to a QString
+        m_receivedMessage = QString::fromUtf8(newValue);
+        qDebug() << "Received message:" << m_receivedMessage;
+
+        // Emit the signal
+        emit messageReceived(m_receivedMessage);
     }
 }
 
@@ -109,3 +123,10 @@ float BLEClient::receivedValue() const
 {
     return m_receivedValue;
 }
+
+QString BLEClient::receivedMessage() const
+{
+    return m_receivedMessage;
+}
+
+
