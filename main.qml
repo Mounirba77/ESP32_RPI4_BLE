@@ -23,7 +23,8 @@ ApplicationWindow {
         }
 
         Text {
-            text: "Received Value: " + bleClient.receivedValue
+            // text: "Received Value: " + bleClient.receivedValue
+            text: "Received Message: " + bleClient.receivedMessage
             font.pixelSize: 18
         }
     }
