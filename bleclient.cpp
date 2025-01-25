@@ -1,4 +1,4 @@
-#include "BLEClient.h"
+#include "bleclient.h"
 #include <QDebug>
 
 BLEClient::BLEClient(QObject *parent) : QObject(parent)
@@ -32,6 +32,8 @@ void BLEClient::deviceConnected()
 {
     qDebug() << "device connected";
     m_connectionStatus = "Connected";
+    m_deviceName = m_controller->remoteName();
+    emit deviceNameChanged();
     emit connectionStatusChanged();
     qDebug() << "Device connected, discovering services...";
     m_controller->discoverServices();
