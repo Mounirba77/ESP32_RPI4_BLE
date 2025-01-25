@@ -80,7 +80,8 @@ void loop() {
       String message = "hello from esp32";
       float pi = 3.14;
       double e = 2.71;
-        pCharacteristic->setValue(e);
+      int x = 12;
+        pCharacteristic->setValue(x);
         pCharacteristic->notify();
 //        value++;
         delay(1000);
