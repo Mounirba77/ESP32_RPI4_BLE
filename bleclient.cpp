@@ -137,20 +137,34 @@ void BLEClient::errorReceived(QLowEnergyController::Error error)
 // }
 
 //for the int
+// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
+// {
+//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
+
+//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
+//         // Parse the received integer value
+//         memcpy(&m_receivedInt, newValue.constData(), sizeof(int));
+//         qDebug() << "Received integer:" << m_receivedInt;
+
+//         // Emit the signal
+//         emit intReceived(m_receivedInt);
+//     }
+// }
+
+//for the int16
 void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 {
     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
 
     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-        // Parse the received integer value
-        memcpy(&m_receivedInt, newValue.constData(), sizeof(int));
-        qDebug() << "Received integer:" << m_receivedInt;
+        // Parse the received uint16_t value
+        memcpy(&m_receivedUInt16, newValue.constData(), sizeof(quint16));
+        qDebug() << "Received uint16_t:" << m_receivedUInt16;
 
         // Emit the signal
-        emit intReceived(m_receivedInt);
+        emit uint16Received(m_receivedUInt16);
     }
 }
-
 float BLEClient::receivedFloat() const
 {
     return m_receivedFloat;
@@ -171,3 +185,7 @@ int BLEClient::receivedInt() const
     return m_receivedInt;
 }
 
+quint16 BLEClient::receivedUInt16() const
+{
+    return m_receivedUInt16;
+}
