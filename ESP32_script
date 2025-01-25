@@ -3,96 +3,105 @@
   Ported to Arduino ESP32 by Evandro Copercini
   updated by chegewara and MoThunderz
 */
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
 
-BLEServer* pServer = NULL;
-BLECharacteristic* pCharacteristic = NULL;
-BLEDescriptor *pDescr;
-BLE2902 *pBLE2902;
+// Include necessary BLE libraries for ESP32
+#include <BLEDevice.h>    // Main BLE device library
+#include <BLEServer.h>    // BLE server functionality
+#include <BLEUtils.h>     // Utility functions for BLE
+#include <BLE2902.h>      // BLE descriptor for enabling notifications
 
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
-uint32_t value = 0;
+// Global pointers for BLE server, characteristic, descriptor, and BLE2902
+BLEServer* pServer = NULL;                // Pointer to the BLE server
+BLECharacteristic* pCharacteristic = NULL; // Pointer to the BLE characteristic
+BLEDescriptor *pDescr;                    // Pointer to the BLE descriptor
+BLE2902 *pBLE2902;                        // Pointer to the BLE2902 descriptor (used for notifications)
 
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
+// Variables to track device connection status
+bool deviceConnected = false;    // Tracks if a device is currently connected
+bool oldDeviceConnected = false; // Tracks the previous connection state
+uint32_t value = 0;              // A variable to store a value (not actively used in this code)
 
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+// UUIDs for the BLE service and characteristic
+// These are unique identifiers for the BLE service and characteristic.
+// You can generate your own UUIDs using: https://www.uuidgenerator.net/
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b" // Service UUID
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8" // Characteristic UUID
 
+// Custom BLE server callbacks to handle connection and disconnection events
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
+      deviceConnected = true; // Set deviceConnected to true when a device connects
     };
 
     void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
+      deviceConnected = false; // Set deviceConnected to false when a device disconnects
     }
 };
 
+// Setup function: Runs once at startup
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); // Initialize serial communication at 115200 baud rate
 
-  // Create the BLE Device
+  // Create the BLE Device with the name "ESP32"
   BLEDevice::init("ESP32");
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+  pServer->setCallbacks(new MyServerCallbacks()); // Set the server callbacks
 
-  // Create the BLE Service
+  // Create the BLE Service using the defined SERVICE_UUID
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create a BLE Characteristic
+  // Create a BLE Characteristic with the defined CHARACTERISTIC_UUID
+  // The characteristic is set to support NOTIFY property (used to send updates to the client)
   pCharacteristic = pService->createCharacteristic(
                       CHARACTERISTIC_UUID,
                       BLECharacteristic::PROPERTY_NOTIFY
-                    );                   
+                    );
 
-  // Create a BLE Descriptor
-  
-  pDescr = new BLEDescriptor((uint16_t)0x2901);
-  pDescr->setValue("A very interesting variable");
-  pCharacteristic->addDescriptor(pDescr);
-  
+  // Create a BLE Descriptor for the characteristic
+  pDescr = new BLEDescriptor((uint16_t)0x2901); // 0x2901 is the UUID for the "Characteristic User Description" descriptor
+  pDescr->setValue("A very interesting variable"); // Set a description for the characteristic
+  pCharacteristic->addDescriptor(pDescr); // Add the descriptor to the characteristic
+
+  // Create and configure the BLE2902 descriptor (required for enabling notifications)
   pBLE2902 = new BLE2902();
-  pBLE2902->setNotifications(true);
-  pCharacteristic->addDescriptor(pBLE2902);
+  pBLE2902->setNotifications(true); // Enable notifications
+  pCharacteristic->addDescriptor(pBLE2902); // Add the BLE2902 descriptor to the characteristic
 
-  // Start the service
+  // Start the BLE service
   pService->start();
 
-  // Start advertising
+  // Start advertising the BLE service
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
-  BLEDevice::startAdvertising();
-  Serial.println("Waiting a client connection to notify...");
+  pAdvertising->addServiceUUID(SERVICE_UUID); // Advertise the service UUID
+  pAdvertising->setScanResponse(false); // Disable scan response
+  pAdvertising->setMinPreferred(0x0);  // Set advertising preferences (0x0 means no specific preference)
+  BLEDevice::startAdvertising(); // Start advertising
+  Serial.println("Waiting a client connection to notify..."); // Print a message to the serial monitor
 }
 
+// Loop function: Runs repeatedly after setup
 void loop() {
-    // notify changed value
+    // Notify the connected device with a value
     if (deviceConnected) {
-      float tmp = 3.14;
-        pCharacteristic->setValue(tmp);
-        pCharacteristic->notify();
-//        value++;
-        delay(1000);
+      float tmp = 3.14; // Example value to send
+      pCharacteristic->setValue(tmp); // Set the value of the characteristic
+      pCharacteristic->notify(); // Send a notification to the connected device
+      delay(1000); // Wait for 1 second before sending the next notification
     }
-    // disconnecting
+
+    // Handle disconnection
     if (!deviceConnected && oldDeviceConnected) {
-        delay(500); // give the bluetooth stack the chance to get things ready
-        pServer->startAdvertising(); // restart advertising
-        Serial.println("start advertising");
-        oldDeviceConnected = deviceConnected;
+        delay(500); // Give the Bluetooth stack time to prepare
+        pServer->startAdvertising(); // Restart advertising to allow new connections
+        Serial.println("start advertising"); // Print a message to the serial monitor
+        oldDeviceConnected = deviceConnected; // Update the connection state
     }
-    // connecting
+
+    // Handle connection
     if (deviceConnected && !oldDeviceConnected) {
-        // do stuff here on connecting
-        oldDeviceConnected = deviceConnected;
+        // Perform actions when a new device connects
+        oldDeviceConnected = deviceConnected; // Update the connection state
     }
 }
