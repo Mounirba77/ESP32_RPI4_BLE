@@ -21,5 +21,10 @@ ApplicationWindow {
             font.pixelSize: 18
             color: bleClient.connectionStatus === "Connected" ? "green" : "red"
         }
+
+        Text {
+            text: "Received Value: " + bleClient.receivedValue
+            font.pixelSize: 18
+        }
     }
 }
