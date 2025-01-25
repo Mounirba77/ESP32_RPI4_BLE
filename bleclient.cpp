@@ -94,41 +94,61 @@ void BLEClient::errorReceived(QLowEnergyController::Error error)
     emit connectionStatusChanged();
 }
 
-//For floats
+//for float variable
 // void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 // {
 //     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
 
 //     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-//         memcpy(&m_receivedValue, newValue.constData(), sizeof(float));
-//         qDebug() << "Received value:" << m_receivedValue;
-//         emit valueReceived(m_receivedValue);
+//         memcpy(&m_receivedFloat, newValue.constData(), sizeof(float));
+//         qDebug() << "Received value:" << m_receivedFloat;
+//         emit valueReceived(m_receivedFloat);
 //     }
 // }
 
-//for sting
+//for string variable
+// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
+// {
+//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
+
+//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
+//         // Convert the received data to a QString
+//         m_receivedMessage = QString::fromUtf8(newValue);
+//         qDebug() << "Received message:" << m_receivedMessage;
+
+//         // Emit the signal
+//         emit messageReceived(m_receivedMessage);
+//     }
+// }
+
+//for double variable
 void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 {
     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
 
     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-        // Convert the received data to a QString
-        m_receivedMessage = QString::fromUtf8(newValue);
-        qDebug() << "Received message:" << m_receivedMessage;
+        // Parse the received double value
+        memcpy(&m_receivedDouble, newValue.constData(), sizeof(double));
+        qDebug() << "Received double:" << m_receivedDouble;
 
         // Emit the signal
-        emit messageReceived(m_receivedMessage);
+        emit doubleReceived(m_receivedDouble);
     }
 }
 
-float BLEClient::receivedValue() const
+float BLEClient::receivedFloat() const
 {
-    return m_receivedValue;
+    return m_receivedFloat;
 }
 
 QString BLEClient::receivedMessage() const
 {
     return m_receivedMessage;
+}
+
+double BLEClient::receivedDouble() const
+{
+    return m_receivedDouble;
 }
 
 
