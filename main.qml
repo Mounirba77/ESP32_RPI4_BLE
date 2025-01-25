@@ -25,7 +25,8 @@ ApplicationWindow {
         Text {
             // text: "Received Value: " + bleClient.receivedFloat
             // text: "Received Message: " + bleClient.receivedMessage
-            text: "Received Double: " + bleClient.receivedDouble
+            // text: "Received Double: " + bleClient.receivedDouble
+            text: "Received Integer: " + bleClient.receivedInt
             font.pixelSize: 18
         }
     }
