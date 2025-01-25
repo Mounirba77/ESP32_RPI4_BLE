@@ -52,12 +52,32 @@ void BLEClient::serviceStateChanged(QLowEnergyService::ServiceState newState)
 {
     if (newState == QLowEnergyService::RemoteServiceDiscovered) {
         qDebug() << "Service details discovered";
+
+        QLowEnergyCharacteristic characteristic = m_service->characteristic(QBluetoothUuid(QUuid(CHARACTERISTIC_UUID)));
+        if (characteristic.isValid()) {
+            m_service->writeDescriptor(characteristic.descriptor(QBluetoothUuid(QBluetoothUuid::DescriptorType::ClientCharacteristicConfiguration)),
+                                       QByteArray::fromHex("0100"));
+            connect(m_service, &QLowEnergyService::characteristicChanged, this, &BLEClient::characteristicChanged);
+        }
     }
 }
-
 void BLEClient::errorReceived(QLowEnergyController::Error error)
 {
     qWarning() << "Error:" << error;
     m_connectionStatus = "Error";
     emit connectionStatusChanged();
+}
+
+void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
+{
+    if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
+        memcpy(&m_receivedValue, newValue.constData(), sizeof(float));
+        qDebug() << "Received value:" << m_receivedValue;
+        emit valueReceived(m_receivedValue);
+    }
+}
+
+float BLEClient::receivedValue() const
+{
+    return m_receivedValue;
 }
