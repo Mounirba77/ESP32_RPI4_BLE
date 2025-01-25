@@ -101,13 +101,13 @@ void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteri
     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
 
     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-        memcpy(&m_receivedValue, newValue.constData(), sizeof(float));
-        qDebug() << "Received value:" << m_receivedValue;
-        emit valueReceived(m_receivedValue);
+        memcpy(&m_receivedFloat, newValue.constData(), sizeof(float));
+        qDebug() << "Received value:" << m_receivedFloat;
+        emit floatReceived(m_receivedFloat);
     }
 }
 
-float BLEClient::receivedValue() const
+float BLEClient::receivedFloat() const
 {
-    return m_receivedValue;
+    return m_receivedFloat;
 }
