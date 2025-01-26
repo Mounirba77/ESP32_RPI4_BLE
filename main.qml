@@ -1,3 +1,4 @@
+// main.qml
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 
@@ -23,8 +24,15 @@ ApplicationWindow {
         }
 
         Text {
-            text: "Received Float: " + bleClient.receivedfloat
+            text: "Received Float: " + bleClient.receivedFloat
             font.pixelSize: 18
+        }
+
+        Button {
+            text: "Send Data"
+            onClicked: {
+                bleClient.sendData("Hello ESP32");
+            }
         }
     }
 }
