@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     engine.load(url);
 
     // Example: Connect to a BLE device (replace with your ESP32's address)
-    QBluetoothAddress address("XX:XX:XX:XX:XX:XX");
+    QBluetoothAddress address("94:54:C5:B1:79:1E");
     QBluetoothDeviceInfo deviceInfo(address, "ESP32", QBluetoothDeviceInfo::LowEnergyCoreConfiguration);
     bleClient.connectToDevice(deviceInfo);
     return app.exec();
