@@ -1,4 +1,4 @@
-#include "BLEClient.h"
+#include "bleclient.h"
 #include <QDebug>
 
 BLEClient::BLEClient(QObject *parent) : QObject(parent)
@@ -32,6 +32,8 @@ void BLEClient::deviceConnected()
 {
     qDebug() << "device connected";
     m_connectionStatus = "Connected";
+    m_deviceName = m_controller->remoteName();
+    emit deviceNameChanged();
     emit connectionStatusChanged();
     qDebug() << "Device connected, discovering services...";
     m_controller->discoverServices();
@@ -63,30 +65,6 @@ void BLEClient::serviceDiscovered(const QBluetoothUuid &serviceUuid)
     }
 }
 
-void BLEClient::serviceStateChanged(QLowEnergyService::ServiceState newState)
-{
-    if (newState == QLowEnergyService::RemoteServiceDiscovered) {
-        qDebug() << "Service details discovered";
-
-        // Get the characteristic
-        QLowEnergyCharacteristic characteristic = m_service->characteristic(QBluetoothUuid(QUuid(CHARACTERISTIC_UUID)));
-        if (characteristic.isValid()) {
-            qDebug() << "Characteristic found, enabling notifications...";
-
-            // Enable notifications
-            QLowEnergyDescriptor notification = characteristic.descriptor(QBluetoothUuid(QUuid("00002902-0000-1000-8000-00805f9b34fb")));
-            if (notification.isValid()) {
-                m_service->writeDescriptor(notification, QByteArray::fromHex("0100"));
-                qDebug() << "Notifications enabled for characteristic:" << characteristic.uuid().toString();
-            } else {
-                qWarning() << "Invalid notification descriptor for characteristic:" << characteristic.uuid().toString();
-            }
-        } else {
-            qWarning() << "Characteristic not found:" << CHARACTERISTIC_UUID;
-        }
-    }
-}
-
 void BLEClient::errorReceived(QLowEnergyController::Error error)
 {
     qWarning() << "Error:" << error;
@@ -94,98 +72,53 @@ void BLEClient::errorReceived(QLowEnergyController::Error error)
     emit connectionStatusChanged();
 }
 
-//for float variable
-// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
-// {
-//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
-
-//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-//         memcpy(&m_receivedFloat, newValue.constData(), sizeof(float));
-//         qDebug() << "Received value:" << m_receivedFloat;
-//         emit valueReceived(m_receivedFloat);
-//     }
-// }
-
-//for string variable
-// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
-// {
-//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
-
-//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-//         // Convert the received data to a QString
-//         m_receivedMessage = QString::fromUtf8(newValue);
-//         qDebug() << "Received message:" << m_receivedMessage;
-
-//         // Emit the signal
-//         emit messageReceived(m_receivedMessage);
-//     }
-// }
-
-//for double variable
-// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
-// {
-//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
-
-//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-//         // Parse the received double value
-//         memcpy(&m_receivedDouble, newValue.constData(), sizeof(double));
-//         qDebug() << "Received double:" << m_receivedDouble;
-
-//         // Emit the signal
-//         emit doubleReceived(m_receivedDouble);
-//     }
-// }
-
-//for the int
-// void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
-// {
-//     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
-
-//     if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-//         // Parse the received integer value
-//         memcpy(&m_receivedInt, newValue.constData(), sizeof(int));
-//         qDebug() << "Received integer:" << m_receivedInt;
-
-//         // Emit the signal
-//         emit intReceived(m_receivedInt);
-//     }
-// }
-
-//for the int16
 void BLEClient::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
 {
     qDebug() << "Characteristic changed:" << characteristic.uuid().toString();
 
-    if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID))) {
-        // Parse the received uint16_t value
-        memcpy(&m_receivedUInt16, newValue.constData(), sizeof(quint16));
-        qDebug() << "Received uint16_t:" << m_receivedUInt16;
-
-        // Emit the signal
-        emit uint16Received(m_receivedUInt16);
+    if (characteristic.uuid() == QBluetoothUuid(QUuid(CHARACTERISTIC_UUID_TX))) {
+        memcpy(&m_receivedFloat, newValue.constData(), sizeof(float));
+        qDebug() << "Received value:" << m_receivedFloat;
+        emit floatReceived(m_receivedFloat);
     }
 }
+
 float BLEClient::receivedFloat() const
 {
     return m_receivedFloat;
 }
 
-QString BLEClient::receivedMessage() const
-{
-    return m_receivedMessage;
+void BLEClient::sendData(const QByteArray &data) {
+    if (m_service && m_rxCharacteristic.isValid()) {
+        m_service->writeCharacteristic(m_rxCharacteristic, data);
+    } else {
+        qWarning() << "Service or characteristic not valid for sending data";
+    }
 }
 
-double BLEClient::receivedDouble() const
-{
-    return m_receivedDouble;
-}
+void BLEClient::serviceStateChanged(QLowEnergyService::ServiceState newState) {
+    if (newState == QLowEnergyService::RemoteServiceDiscovered) {
+        qDebug() << "Service details discovered";
 
-int BLEClient::receivedInt() const
-{
-    return m_receivedInt;
-}
+        // Get the TX characteristic
+        QLowEnergyCharacteristic txCharacteristic = m_service->characteristic(QBluetoothUuid(QUuid(CHARACTERISTIC_UUID_TX)));
+        if (txCharacteristic.isValid()) {
+            qDebug() << "TX Characteristic found, enabling notifications...";
+            QLowEnergyDescriptor notification = txCharacteristic.descriptor(QBluetoothUuid(QUuid("00002902-0000-1000-8000-00805f9b34fb")));
+            if (notification.isValid()) {
+                m_service->writeDescriptor(notification, QByteArray::fromHex("0100"));
+                qDebug() << "Notifications enabled for TX characteristic:" << txCharacteristic.uuid().toString();
+            } else {
+                qWarning() << "Invalid notification descriptor for TX characteristic:" << txCharacteristic.uuid().toString();
+            }
+        } else {
+            qWarning() << "TX Characteristic not found:" << CHARACTERISTIC_UUID_TX;
+        }
 
-quint16 BLEClient::receivedUInt16() const
-{
-    return m_receivedUInt16;
+        // Get the RX characteristic
+        m_rxCharacteristic = m_service->characteristic(QBluetoothUuid(QUuid(CHARACTERISTIC_UUID_RX)));
+        if (!m_rxCharacteristic.isValid()) {
+            qWarning() << "RX Characteristic not found:" << CHARACTERISTIC_UUID_RX;
+        }
+    }
 }
