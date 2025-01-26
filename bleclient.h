@@ -6,7 +6,8 @@
 #include <QBluetoothDeviceInfo>
 #include <QBluetoothUuid>
 #include <QLowEnergyService>
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define CHARACTERISTIC_UUID_TX "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+#define CHARACTERISTIC_UUID_RX "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 
 class BLEClient : public QObject
@@ -15,31 +16,20 @@ class BLEClient : public QObject
     Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged)
     Q_PROPERTY(QString connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
     Q_PROPERTY(float receivedFloat READ receivedFloat NOTIFY floatReceived)
-    Q_PROPERTY(QString receivedMessage READ receivedMessage NOTIFY messageReceived)
-    Q_PROPERTY(double receivedDouble READ receivedDouble NOTIFY doubleReceived)
-    Q_PROPERTY(int receivedInt READ receivedInt NOTIFY intReceived)
-    Q_PROPERTY(quint16 receivedUInt16 READ receivedUInt16 NOTIFY uint16Received)
 
 public:
     explicit BLEClient(QObject *parent = nullptr);
     void connectToDevice(const QBluetoothDeviceInfo &deviceInfo);
+    Q_INVOKABLE void sendData(const QByteArray &data); // New method to send data
 
     QString deviceName() const;
     QString connectionStatus() const;
     float receivedFloat() const;
-    QString receivedMessage() const;
-    double receivedDouble() const;
-    int receivedInt() const;
-    quint16 receivedUInt16() const;
 
 signals:
     void deviceNameChanged();
     void connectionStatusChanged();
     void floatReceived(float value);
-    void messageReceived(const QString &message);
-    void doubleReceived(double value);
-    void intReceived(int value);
-    void uint16Received(quint16 value);
 
 private slots:
     void deviceConnected();
@@ -55,11 +45,7 @@ private:
     QString m_deviceName;
     QString m_connectionStatus;
     float m_receivedFloat = 0.0f;
-    QString m_receivedMessage;
-    double m_receivedDouble;
-    int m_receivedInt;
-    quint16 m_receivedUInt16;
-
+    QLowEnergyCharacteristic m_rxCharacteristic; // Characteristic for receiving data
 };
 
 #endif // BLECLIENT_H
