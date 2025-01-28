@@ -91,11 +91,12 @@ float BLEClient::receivedFloat() const
 void BLEClient::sendData(const QByteArray &data) {
     if (m_service && m_rxCharacteristic.isValid()) {
         m_service->writeCharacteristic(m_rxCharacteristic, data);
-    } else {
-        qWarning() << "Service or characteristic not valid for sending data";
     }
     if (!m_rxCharacteristic.isValid()) {
-        qDebug() << "mrxcharacteristic is not valid";
+        qWarning() << "Service not valid for sending data";
+    }
+    if (!m_service) {
+        qWarning() << "characteristics is not valid";
     }
 }
 
@@ -120,8 +121,11 @@ void BLEClient::serviceStateChanged(QLowEnergyService::ServiceState newState) {
 
         // Get the RX characteristic
         m_rxCharacteristic = m_service->characteristic(QBluetoothUuid(QUuid(CHARACTERISTIC_UUID_RX)));
-        if (!m_rxCharacteristic.isValid()) {
-            qWarning() << "RX Characteristic not found:" << CHARACTERISTIC_UUID_RX;
+        if (m_rxCharacteristic.isValid()) {
+            qDebug() << "RX Characteristic found:" << CHARACTERISTIC_UUID_RX;
+        }
+        else {
+            qWarning() << "RX Caracteristic not found:" << CHARACTERISTIC_UUID_RX;
         }
     }
 }
