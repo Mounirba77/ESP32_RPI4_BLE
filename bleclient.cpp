@@ -94,6 +94,9 @@ void BLEClient::sendData(const QByteArray &data) {
     } else {
         qWarning() << "Service or characteristic not valid for sending data";
     }
+    if (!m_rxCharacteristic.isValid()) {
+        qDebug() << "mrxcharacteristic is not valid";
+    }
 }
 
 void BLEClient::serviceStateChanged(QLowEnergyService::ServiceState newState) {
