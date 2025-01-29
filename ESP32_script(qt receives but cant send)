@@ -1,109 +1,221 @@
-<#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
+//#include <BLEDevice.h>
+//#include <BLEServer.h>
+//#include <BLEUtils.h>
+//#include <BLE2902.h>
+//
+//BLEServer *pServer = nullptr;
+//BLECharacteristic *pTxCharacteristic = nullptr;
+//BLECharacteristic *pRxCharacteristic = nullptr;
+//BLEDescriptor *pDescr_Tx;
+//BLEDescriptor *pDescr_Rx;
+//BLE2902 *pBLE2902_Tx;
+//BLE2902 *pBLE2902_Rx;
+//bool deviceConnected = false;
+//bool oldDeviceConnected = false;
+//
+//#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+//#define CHARACTERISTIC_UUID_TX "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+//#define CHARACTERISTIC_UUID_RX "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+//
+//class MyServerCallbacks : public BLEServerCallbacks {
+//    void onConnect(BLEServer *pServer) {
+//        deviceConnected = true;
+//        Serial.println("Client connected");
+//    }
+//
+//    void onDisconnect(BLEServer *pServer) {
+//        deviceConnected = false;
+//        Serial.println("Client disconnected");
+//    }
+//};
+//
+//class MyCallbacks : public BLECharacteristicCallbacks {
+//    void onWrite(BLECharacteristic *pCharacteristic) {
+//        String receivedData = pCharacteristic->getValue();
+//        if (receivedData.length() > 0) {
+//            Serial.print("Received data: ");
+//            Serial.println(receivedData.c_str());
+//            
+////            // Example: Echo the received data back to the client
+////            pTxCharacteristic->setValue(receivedData);
+////            pTxCharacteristic->notify();
+//        }
+//    }
+//};
+//
+//void setup() {
+//    Serial.begin(115200);
+//    BLEDevice::init("ESP32");
+//
+//    // Create BLE Server
+//    pServer = BLEDevice::createServer();
+//    pServer->setCallbacks(new MyServerCallbacks());
+//
+//    // Create BLE Service
+//    BLEService *pService = pServer->createService(SERVICE_UUID);
+//
+//    // Create TX Characteristic
+//    pTxCharacteristic = pService->createCharacteristic(
+//        CHARACTERISTIC_UUID_TX,
+//        BLECharacteristic::PROPERTY_NOTIFY
+//    );
+//    pDescr_Tx = new BLEDescriptor((uint16_t)0x2901);
+//    pTxCharacteristic->addDescriptor(pDescr_Tx);
+//    pBLE2902_Tx = new BLE2902();
+//    pBLE2902_Tx->setNotifications(true);
+//    pTxCharacteristic->addDescriptor(pBLE2902_Tx);
+//
+//    // Create RX Characteristic
+//    pRxCharacteristic = pService->createCharacteristic(
+//        CHARACTERISTIC_UUID_RX,
+//        BLECharacteristic::PROPERTY_WRITE
+//    );
+//    pRxCharacteristic->setCallbacks(new MyCallbacks());
+//
+//    // Start the service
+//    pService->start();
+//
+////    // Start advertising
+////    pServer->getAdvertising()->start();
+//    // Start advertising
+//    BLEAdvertising *pAdvertising = pServer->getAdvertising();
+//    pAdvertising->addServiceUUID(SERVICE_UUID);
+//    pAdvertising->setScanResponse(true);
+//    pAdvertising->start();
+//    Serial.println("Waiting for a client connection...");
+//}
+//
+//void loop() {
+//    // Monitor connection status
+//    if (deviceConnected) {
+//        // Simulate sending float data to the client
+//        float valueToSend = 42.42;
+//        pTxCharacteristic->setValue((uint8_t *)&valueToSend, sizeof(valueToSend));
+////        pTxCharacteristic->setValue(valueToSend);
+//        pTxCharacteristic->notify();
+//        delay(1000); // Send every second
+//    }
+//
+//    // Handle disconnection
+//    if (!deviceConnected && oldDeviceConnected) {
+//        delay(500);  // Wait before advertising again
+//        pServer->startAdvertising();
+//        Serial.println("Advertising restarted");
+//        oldDeviceConnected = deviceConnected;
+//    }
+//
+//    oldDeviceConnected = deviceConnected;
+//}
 
-BLEServer *pServer = nullptr;
-BLECharacteristic *pTxCharacteristic = nullptr;
-BLECharacteristic *pRxCharacteristic = nullptr;
-BLEDescriptor *pDescr_Tx;
-BLEDescriptor *pDescr_Rx;
-BLE2902 *pBLE2902_Tx;
-BLE2902 *pBLE2902_Rx;
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
+#include <BLEDevice.h> // Include the BLEDevice library for general BLE functions
+#include <BLEServer.h> // Include the BLEServer library for creating a BLE server (peripheral)
+#include <BLEUtils.h> // Include the BLEUtils library for BLE utility functions (UUIDs, etc.)
+#include <BLE2902.h> // Include the BLE2902 library for configuring Client Characteristic Configuration Descriptor (CCCD)
 
-#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID_TX "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define CHARACTERISTIC_UUID_RX "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+// Define global pointers for BLE objects. These will be initialized later.
+BLEServer *pServer = nullptr; // Pointer to the BLE server object
+BLECharacteristic *pTxCharacteristic = nullptr; // Pointer to the TX (transmit) characteristic
+BLECharacteristic *pRxCharacteristic = nullptr; // Pointer to the RX (receive) characteristic
+BLEDescriptor *pDescr_Tx; // Descriptor for the TX characteristic
+BLEDescriptor *pDescr_Rx; // Descriptor for the RX characteristic
+BLE2902 *pBLE2902_Tx; // CCCD for the TX characteristic
+BLE2902 *pBLE2902_Rx; // CCCD for the RX characteristic
+bool deviceConnected = false; // Flag to track if a device is connected
+bool oldDeviceConnected = false; // Flag to track the previous connection state
 
+// Define the UUIDs for the service and characteristics.  These are crucial for the client to find and interact with the server.
+#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b" // UUID of the custom service
+#define CHARACTERISTIC_UUID_TX "beb5483e-36e1-4688-b7f5-ea07361b26a8" // UUID of the TX characteristic (for sending data)
+#define CHARACTERISTIC_UUID_RX "6e400002-b5a3-f393-e0a9-e50e24dcca9e" // UUID of the RX characteristic (for receiving data)
+
+// Define a class to handle server callbacks (connection/disconnection events)
 class MyServerCallbacks : public BLEServerCallbacks {
-    void onConnect(BLEServer *pServer) {
-        deviceConnected = true;
-        Serial.println("Client connected");
+    void onConnect(BLEServer *pServer) { // Called when a client connects
+        deviceConnected = true; // Set the connection flag to true
+        Serial.println("Client connected"); // Print a message to the serial monitor
     }
 
-    void onDisconnect(BLEServer *pServer) {
-        deviceConnected = false;
-        Serial.println("Client disconnected");
+    void onDisconnect(BLEServer *pServer) { // Called when a client disconnects
+        deviceConnected = false; // Set the connection flag to false
+        Serial.println("Client disconnected"); // Print a message to the serial monitor
     }
 };
 
+// Define a class to handle characteristic write callbacks (when the client sends data)
 class MyCallbacks : public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-        String receivedData = pCharacteristic->getValue();
-        if (receivedData.length() > 0) {
+    void onWrite(BLECharacteristic *pCharacteristic) { // Called when the client writes to the RX characteristic
+        String receivedValue = pCharacteristic->getValue(); // Get the received data as a string
+        if (receivedValue.length() > 0) { // Check if any data was received
             Serial.print("Received data: ");
-            Serial.println(receivedData.c_str());
-            
-            // Example: Echo the received data back to the client
-            pTxCharacteristic->setValue(receivedData);
-            pTxCharacteristic->notify();
+            for (int i = 0; i < receivedValue.length(); i++) {
+              Serial.print(receivedValue[i]);
+            }
+            Serial.println();
+
+            // Example: Echo the received data back to the client (uncomment to enable)
+            // pTxCharacteristic->setValue(receivedValue); // Set the value of the TX characteristic
+            // pTxCharacteristic->notify(); // Notify the client that the TX characteristic value has changed
         }
     }
 };
 
-void setup() {
-    Serial.begin(115200);
-    BLEDevice::init("ESP32");
+void setup() { // Setup function (runs once at the beginning)
+    Serial.begin(115200); // Initialize serial communication for debugging
+    BLEDevice::init("ESP32"); // Initialize the BLE device with the name "ESP32"
 
     // Create BLE Server
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
+    pServer = BLEDevice::createServer(); // Create the BLE server
+    pServer->setCallbacks(new MyServerCallbacks()); // Set the server callbacks
 
     // Create BLE Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
+    BLEService *pService = pServer->createService(SERVICE_UUID); // Create the BLE service with the defined UUID
 
-    // Create TX Characteristic
-    pTxCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID_TX,
-        BLECharacteristic::PROPERTY_NOTIFY
+    // Create TX Characteristic (for sending data)
+    pTxCharacteristic = pService->createCharacteristic( // Create the TX characteristic
+        CHARACTERISTIC_UUID_TX, // Use the defined UUID
+        BLECharacteristic::PROPERTY_NOTIFY // Set the property to NOTIFY (server can send data to client)
     );
-    pDescr_Tx = new BLEDescriptor((uint16_t)0x2901);
-    pTxCharacteristic->addDescriptor(pDescr_Tx);
-    pBLE2902_Tx = new BLE2902();
-    pBLE2902_Tx->setNotifications(true);
-    pTxCharacteristic->addDescriptor(pBLE2902_Tx);
+    pDescr_Tx = new BLEDescriptor((uint16_t)0x2901); // Create a client readable descriptor for TX
+    pTxCharacteristic->addDescriptor(pDescr_Tx); // Add the descriptor to TX Characteristic
+    pBLE2902_Tx = new BLE2902(); // Create CCCD for TX
+    pBLE2902_Tx->setNotifications(true); // Enable notifications for TX
+    pTxCharacteristic->addDescriptor(pBLE2902_Tx); // Add CCCD to TX Characteristic
 
-    // Create RX Characteristic
-    pRxCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID_RX,
-        BLECharacteristic::PROPERTY_READ   |
-        BLECharacteristic::PROPERTY_WRITE  |                      
-        BLECharacteristic::PROPERTY_NOTIFY 
+    // Create RX Characteristic (for receiving data)
+    pRxCharacteristic = pService->createCharacteristic( // Create the RX characteristic
+        CHARACTERISTIC_UUID_RX, // Use the defined UUID
+        BLECharacteristic::PROPERTY_WRITE // Set the property to WRITE (client can send data to server)
     );
-    pDescr_Rx = new BLEDescriptor((uint16_t)0x2902);
-    pBLE2902_Rx = new BLE2902();
-    pBLE2902_Rx->setNotifications(true);
-    pRxCharacteristic->addDescriptor(pBLE2902_Rx);
-    pRxCharacteristic->setCallbacks(new MyCallbacks());
+    pRxCharacteristic->setCallbacks(new MyCallbacks()); // Set the characteristic callbacks (for when the client writes)
 
     // Start the service
-    pService->start();
+    pService->start(); // Start the BLE service
 
-    // Start advertising
-    pServer->getAdvertising()->start();
-    Serial.println("Waiting for a client connection...");
+    // Start advertising (make the ESP32 discoverable)
+    BLEAdvertising *pAdvertising = pServer->getAdvertising(); // Get the advertising object
+    pAdvertising->addServiceUUID(SERVICE_UUID); // Advertise the service UUID
+    pAdvertising->setScanResponse(true); // Set Scan Response
+    pAdvertising->start(); // Start advertising
+    Serial.println("Waiting for a client connection..."); // Print a message to the serial monitor
 }
 
-void loop() {
+void loop() { // Loop function (runs repeatedly)
     // Monitor connection status
-    if (deviceConnected) {
+    if (deviceConnected) { // If a device is connected
         // Simulate sending float data to the client
-        float valueToSend = 42.42;
-        //pTxCharacteristic->setValue((uint8_t *)&valueToSend, sizeof(valueToSend));
-        pTxCharacteristic->setValue(valueToSend);
-        pTxCharacteristic->notify();
-        delay(1000); // Send every second
+        float valueToSend = 42.42; // The float value to send
+        pTxCharacteristic->setValue((uint8_t *)&valueToSend, sizeof(valueToSend)); // Set the value of the TX characteristic.  Crucially, this sends the raw bytes of the float.
+        pTxCharacteristic->notify(); // Notify the client that the value has changed
+        delay(1000); // Send data every second
     }
 
     // Handle disconnection
-    if (!deviceConnected && oldDeviceConnected) {
-        delay(500);  // Wait before advertising again
-        pServer->startAdvertising();
-        Serial.println("Advertising restarted");
-        oldDeviceConnected = deviceConnected;
+    if (!deviceConnected && oldDeviceConnected) { // If a device has disconnected
+        delay(500); // Wait a little bit
+        pServer->startAdvertising(); // Restart advertising
+        Serial.println("Advertising restarted"); // Print a message
+        oldDeviceConnected = deviceConnected; // Update the old connection state
     }
 
-    oldDeviceConnected = deviceConnected;
+    oldDeviceConnected = deviceConnected; // Update the old connection state
 }
